@@ -1,5 +1,7 @@
 from typing import Union
 
+from tsc_utils.util import tsc_divmod
+
 
 TscValue = bytes
 TscInput = Union[TscValue, str]
@@ -30,10 +32,6 @@ def tsc_value_to_num(value: TscInput) -> int:
         num += digit * 10**dec_place
     return num
 
-# converts a number (e.g. 1234 or -1) to a tsc value ("1234" or "000/")
-# generates an "ideal" value for a given number according to the smallest and largest permissible ASCII values
-# where possible, generates a number using only a single out of bounds character which can be typed on a normal keyboard
-# can generate output values of any length, for niche use cases such as custom TSC commands
 def num_to_tsc_value(num: int, output_length: int = 4, min_char: bytes = b' ', max_char: bytes = b'~') -> TscValue:
     """
     Converts a number to a TSC value.
@@ -97,7 +95,7 @@ def _multi_char_value(num: int, output_length: int, min_char: bytes, max_char: b
     value: list[int] = []
     for i in range(output_length):
         dec_place = 10**((output_length-1)-i)
-        char = max(ord(min_char)-ord('0'), min(num // dec_place, ord(max_char)-ord('0')))
+        char = max(ord(min_char)-ord('0'), min(int(num / dec_place), ord(max_char)-ord('0')))
 
         num -= dec_place * char
 
@@ -109,8 +107,7 @@ def _single_char_value(num: int, dec_place: int) -> TscValue:
     Recursively generates a TSC value from a given number, using only a single out-of-bounds character.
     Limited to characters within [b' ', b'~'].
     """
-    digit = num // (10**dec_place)
-    remainder = num % (10**dec_place)
+    digit, remainder = tsc_divmod(num, 10**dec_place)
 
     if remainder and digit < 0:
         digit -= 1

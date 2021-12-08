@@ -1,6 +1,7 @@
 from typing import NamedTuple, Optional, Union
 from typing_extensions import get_args
 from tsc_utils.numbers import tsc_value_to_num, num_to_tsc_value, TscInput
+from tsc_utils.util import twos_complement
 
 
 class Address(NamedTuple):
@@ -48,12 +49,6 @@ def flag_to_address(flag: Union[TscInput, int], base: Address = FREEWARE_FLAGS) 
 
     offset, bit = divmod(flag, 8)
     return Address(offset, bit) + base
-
-def twos_complement(num: int, bits: int) -> int:
-    if num & (1 << (bits-1)) != 0:
-        # sign bit is set; compute 2s complement
-        num -= (1 << bits)
-    return num
 
 def address_to_flag(address: Union[Address, int],
                     value: Optional[int] = None,
