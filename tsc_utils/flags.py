@@ -17,7 +17,7 @@ class Address(NamedTuple):
     
     def __add__(self, other: Union["Address", int]) -> "Address":
         if isinstance(other, int):
-            other = Address(other, 0)
+            other = Address(0, other)
         offset, bit = divmod(self.bit + other.bit, 8)
         offset += self.offset + other.offset
         return Address(offset, bit)
@@ -54,8 +54,9 @@ def address_to_flag(address: Union[Address, int],
                     value: Optional[int] = None,
                     bits: int = 32,
                     base: Address = FREEWARE_FLAGS,
-                    min_char=b'\x00',
-                    max_char=b'\xff'):
+                    min_char: bytes = b'\x00',
+                    max_char: bytes = b'\xff',
+                    reverse: bool = False):
     """
     Converts a memory address to a list of flags, or, optionally, a list of <FL-/<FL+ commands to set a given value.
     Based on code by @thomas-xin for Miza.
@@ -66,6 +67,7 @@ def address_to_flag(address: Union[Address, int],
     :param base: The address in memory of the flags array.
     :param min_char: The smallest legal value to use for the flag values.
     :param max_char: The largest legal value to use for the flag values.
+    :param reverse: Whether to reverse the bit-level endianness.
 
     :return: A list of either raw flag values, or the flag commands to set those flags to the provided value.
 
@@ -91,7 +93,10 @@ def address_to_flag(address: Union[Address, int],
 
     num = address - base
     flags = []
-    for i in range(bits):
+    r = range(bits)
+    if reverse:
+        r = r.__reversed__
+    for i in r:
         f = num_to_tsc_value((num+i).bits, 4, min_char, max_char)
         if value is None:
             flags.append(f)
@@ -99,3 +104,12 @@ def address_to_flag(address: Union[Address, int],
             command = "<FL+" if value&(1<<i) != 0 else "<FL-"
             flags.append(f"{command}{f.decode('utf-8')}")
     return flags
+
+def set_flag(flag: Union[TscInput, int],
+             value: int,
+             bits: int = 32,
+             base: Address = FREEWARE_FLAGS,
+             min_char: bytes = b'\x00',
+             max_char: bytes = b'\xff',
+             reverse: bool = False) -> str:
+    return "".join(address_to_flag(flag_to_address(flag, base), value, bits, base, min_char, max_char, reverse))
