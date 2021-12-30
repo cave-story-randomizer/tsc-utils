@@ -76,7 +76,7 @@ def num_to_tsc_value(num: int, output_length: int = 4, min_char: bytes = b' ', m
 
     # within standard bounds
     if num >= 0 and num <= 10**(output_length-1):
-        return str(num).zfill(output_length).encode('utf-8')
+        return str(num).zfill(output_length).encode('utf-8', errors="backslashreplace")
     
     # magnitude is greater than can be represented with a single printable out of bounds character
     min_single = tsc_value_to_num(b' ' + b"0"*(output_length-1))
@@ -120,6 +120,6 @@ def _single_char_value(num: int, dec_place: int) -> TscValue:
     
     if digit != 0:
         # We've used an OOB character, so the rest is trivial
-        return out + str(remainder).zfill(dec_place).encode('utf-8')
+        return out + str(remainder).zfill(dec_place).encode('utf-8', errors="backslashreplace")
     
     return out + _single_char_value(num, dec_place-1)

@@ -102,7 +102,7 @@ def address_to_flag(address: Union[Address, int],
             flags.append(f)
         else:
             command = "<FL+" if value&(1<<i) != 0 else "<FL-"
-            flags.append(f"{command}{f.decode('utf-8')}")
+            flags.append(f"{command}{f.decode('utf-8', errors='backslashreplace')}")
     return flags
 
 def set_flag(flag: Union[TscInput, int],
