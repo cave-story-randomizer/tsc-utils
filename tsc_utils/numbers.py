@@ -1,6 +1,6 @@
 from typing import Union
 
-from tsc_utils.util import tsc_divmod
+from tsc_utils.util import tsc_divmod, twos_complement
 
 
 TscValue = bytes
@@ -27,6 +27,7 @@ def tsc_value_to_num(value: TscInput) -> int:
     input_length = len(value) - 1
     num = 0
     for i, digit in enumerate(value):
+        digit = twos_complement(digit, 8)
         digit -= ord('0')
         dec_place = input_length - i
         num += digit * 10**dec_place
@@ -63,9 +64,9 @@ def num_to_tsc_value(num: int, output_length: int = 4, min_char: bytes = b' ', m
     if len(min_char) != 1 or len(max_char) != 1:
         raise ValueError(f"Both min_char ({min_char}) and max_char ({max_char}) must be exactly 1 byte long.")
     
-    if min_char > b'0':
+    if min_char > b'0' and min_char < b'\x80':
         raise ValueError(f"min_char {min_char} must be less than or equal to b'0'")
-    if max_char < b'9':
+    if max_char < b'9' or max_char > b'\x7f':
         raise ValueError(f"max_char {max_char} must be greater than or equal to b'9'")
 
     min_value = tsc_value_to_num(min_char*output_length)

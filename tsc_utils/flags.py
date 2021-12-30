@@ -54,12 +54,12 @@ def address_to_flag(address: Union[Address, int],
                     value: Optional[int] = None,
                     bits: int = 32,
                     base: Address = FREEWARE_FLAGS,
-                    min_char: bytes = b'\x00',
-                    max_char: bytes = b'\xff',
+                    min_char: bytes = b'\x80',
+                    max_char: bytes = b'\x7f',
                     reverse: bool = False):
     """
     Converts a memory address to a list of flags, or, optionally, a list of <FL-/<FL+ commands to set a given value.
-    Based on code by @thomas-xin for Miza.
+    Inspired by a Miza command by @thomas-xin.
 
     :param address: The memory address to find flags for.
     :param value: The value to set the address to using flag commands.
@@ -109,7 +109,7 @@ def set_flag(flag: Union[TscInput, int],
              value: int,
              bits: int = 32,
              base: Address = FREEWARE_FLAGS,
-             min_char: bytes = b'\x00',
-             max_char: bytes = b'\xff',
+             min_char: bytes = b'\x80',
+             max_char: bytes = b'\x7f',
              reverse: bool = False) -> str:
     return "".join(address_to_flag(flag_to_address(flag, base), value, bits, base, min_char, max_char, reverse))
