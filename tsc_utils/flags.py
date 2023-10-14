@@ -100,7 +100,7 @@ def address_to_flag(address: Union[Address, int],
     if reverse:
         r = reversed(r) # type: ignore
     for i in r:
-        f = num_to_tsc_value((num+i).bits, 4, min_char, max_char)
+        f = num_to_tsc_value((num+Address(0, i)).bits, 4, min_char, max_char)
         if value is None:
             flags.append(f)
         else:
