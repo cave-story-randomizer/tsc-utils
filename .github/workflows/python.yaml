@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     name: Wheel
 
     steps:
@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: "3.6"
-     
+
       - name: Install Python packages
         run: python -m pip install --upgrade build pip
 
@@ -32,7 +32,7 @@ jobs:
 
       - name: build sdist
         run: python -m build --sdist
-      
+
       - name: Store the packages
         uses: actions/upload-artifact@v2
         with:
@@ -57,7 +57,7 @@ jobs:
         with:
           password: ${{ secrets.testpypi_password }}
           repository_url: https://test.pypi.org/legacy/
-      
+
       - name: Publish 📦 to PyPI
         if: ${{ startsWith(github.ref, 'refs/tags/') }}
         uses: pypa/gh-action-pypi-publish@master
