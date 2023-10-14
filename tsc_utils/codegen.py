@@ -23,7 +23,7 @@ def codec(event_no: TscInput,
 
     :return: A script with one event corresponding to each possible value that can be encoded in the given flags.
     """
-    highest_possible = 2**len(flags)
+    highest_possible: int = 2**len(flags)
     if max_val is None:
         max_val = highest_possible
     max_val = min(max_val, highest_possible)
@@ -32,11 +32,11 @@ def codec(event_no: TscInput,
     conditional_jump = "f" if credit else "<FLJ"
 
     base_event_num = tsc_value_to_num(event_no)
-    
+
     script = ""
     for val in range(max_val):
         eve = num_to_tsc_value(base_event_num+val)
-        script += f"{event_label}{eve}\n"
+        script += f"{event_label}{eve!r}\n"
 
         first_flag_to_check = val.bit_length()
         if first_flag_to_check < len(flags):
@@ -45,7 +45,7 @@ def codec(event_no: TscInput,
                 num = (val|(1<<i))
                 if num >= max_val:
                     continue
-                flagjumps += f"{conditional_jump}{flags[i]}:{num_to_tsc_value(base_event_num+num)}"
+                flagjumps += f"{conditional_jump}{flags[i]!r}:{num_to_tsc_value(base_event_num+num)!r}"
             if len(flagjumps) > 0:
                 script += f'{flagjumps}\n'
         script += f'{behavior(val)}\n'

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import List, Union
 
 from tsc_utils.util import tsc_divmod, twos_complement
 
@@ -62,28 +62,28 @@ def num_to_tsc_value(num: int, output_length: int = 4, min_char: bytes = b' ', m
         b'\\x94000'
     """
     if len(min_char) != 1 or len(max_char) != 1:
-        raise ValueError(f"Both min_char ({min_char}) and max_char ({max_char}) must be exactly 1 byte long.")
-    
+        raise ValueError(f"Both min_char ({min_char!r}) and max_char ({max_char!r}) must be exactly 1 byte long.")
+
     if min_char > b'0' and min_char < b'\x80':
-        raise ValueError(f"min_char {min_char} must be less than or equal to b'0'")
+        raise ValueError(f"min_char {min_char!r} must be less than or equal to b'0'")
     if max_char < b'9' or max_char > b'\x7f':
-        raise ValueError(f"max_char {max_char} must be greater than or equal to b'9'")
+        raise ValueError(f"max_char {max_char!r} must be greater than or equal to b'9'")
 
     min_value = tsc_value_to_num(min_char*output_length)
     max_value = tsc_value_to_num(max_char*output_length)
     if num not in range(min_value, max_value+1):
-        raise ValueError(f"{num} is outside the possible values of [{min_value}, {max_value}] using min_char {min_char} and max_char {max_char}")
+        raise ValueError(f"{num} is outside the possible values of [{min_value!r}, {max_value!r}] using min_char {min_char!r} and max_char {max_char!r}")
 
     # within standard bounds
     if num >= 0 and num <= 10**(output_length-1):
         return str(num).zfill(output_length).encode('utf-8', errors="backslashreplace")
-    
+
     # magnitude is greater than can be represented with a single printable out of bounds character
     min_single = tsc_value_to_num(b' ' + b"0"*(output_length-1))
     max_single = tsc_value_to_num(b'~' + b"9"*(output_length-1))
     if num not in range(min_single, max_single+1):
         return _multi_char_value(num, output_length, min_char, max_char)
-    
+
     # within range for a value with a single out of bounds character
     return _single_char_value(num, output_length-1)
 
@@ -93,7 +93,7 @@ def _multi_char_value(num: int, output_length: int, min_char: bytes, max_char: b
     Character usage limited only by the min_char and max_char arguments.
     Adapted from code by @Brayconn.
     """
-    value: list[int] = []
+    value: List[int] = []
     for i in range(output_length):
         dec_place = 10**((output_length-1)-i)
         char = max(ord(min_char)-ord('0'), min(int(num / dec_place), ord(max_char)-ord('0')))
@@ -112,14 +112,14 @@ def _single_char_value(num: int, dec_place: int) -> TscValue:
 
     if remainder and digit < 0:
         digit -= 1
-    
+
     out = TscValue([ord('0') + digit])
 
     if dec_place == 0:
         return out
-    
+
     if digit != 0:
         # We've used an OOB character, so the rest is trivial
         return out + str(remainder).zfill(dec_place).encode('utf-8', errors="backslashreplace")
-    
+
     return out + _single_char_value(num, dec_place-1)

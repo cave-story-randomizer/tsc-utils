@@ -1,6 +1,7 @@
-from typing import NamedTuple, Optional, Union
+from typing import Iterable, List, NamedTuple, Optional, Reversible, Sequence, Union
+import typing
 from typing_extensions import get_args
-from tsc_utils.numbers import tsc_value_to_num, num_to_tsc_value, TscInput
+from tsc_utils.numbers import TscValue, tsc_value_to_num, num_to_tsc_value, TscInput
 from tsc_utils.util import twos_complement
 
 
@@ -14,15 +15,17 @@ class Address(NamedTuple):
 
     def __str__(self) -> str:
         return f"{hex(self.offset)}, bit {self.bit}"
-    
-    def __add__(self, other: Union["Address", int]) -> "Address":
+
+    def __add__(self, other: Union["Address", int]) -> "Address": # type: ignore
         if isinstance(other, int):
-            other = Address(0, other)
+            other = Address(other, 0)
         offset, bit = divmod(self.bit + other.bit, 8)
         offset += self.offset + other.offset
         return Address(offset, bit)
-    
-    def __sub__(self, other: Union["Address", int]) -> "Address":
+
+    def __sub__(self, other: Union["Address", int]) -> "Address": # type: ignore
+        if isinstance(other, int):
+            other = Address(other, 0)
         return self + Address(-other.offset, -other.bit)
 
 FREEWARE_FLAGS = Address(0x49DDA0, 0)
@@ -44,7 +47,7 @@ def flag_to_address(flag: Union[TscInput, int], base: Address = FREEWARE_FLAGS) 
         >>> flag_to_address(b'000/')
         0x49dd9f, bit 7
     """
-    if isinstance(flag, get_args(TscInput)):
+    if isinstance(flag, bytes) or isinstance(flag, str):
         flag = tsc_value_to_num(flag)
 
     offset, bit = divmod(flag, 8)
@@ -56,7 +59,7 @@ def address_to_flag(address: Union[Address, int],
                     base: Address = FREEWARE_FLAGS,
                     min_char: bytes = b'\x80',
                     max_char: bytes = b'\x7f',
-                    reverse: bool = False):
+                    reverse: bool = False) -> List[TscInput]:
     """
     Converts a memory address to a list of flags, or, optionally, a list of <FL-/<FL+ commands to set a given value.
     Inspired by a Miza command by @thomas-xin.
@@ -87,15 +90,15 @@ def address_to_flag(address: Union[Address, int],
             raise ValueError(f"{value} too large for a {bits}-bit number.")
         if value < 0:
             value = twos_complement(value, bits)
-    
+
     if isinstance(address, int):
         address = Address(address, 0)
 
     num = address - base
-    flags = []
+    flags: List[TscInput] = []
     r = range(bits)
     if reverse:
-        r = r.__reversed__
+        r = reversed(r) # type: ignore
     for i in r:
         f = num_to_tsc_value((num+i).bits, 4, min_char, max_char)
         if value is None:
@@ -112,4 +115,5 @@ def set_flag(flag: Union[TscInput, int],
              min_char: bytes = b'\x80',
              max_char: bytes = b'\x7f',
              reverse: bool = False) -> str:
-    return "".join(address_to_flag(flag_to_address(flag, base), value, bits, base, min_char, max_char, reverse))
+    scripts = typing.cast(List[str], address_to_flag(flag_to_address(flag, base), value, bits, base, min_char, max_char, reverse))
+    return "".join(scripts)
